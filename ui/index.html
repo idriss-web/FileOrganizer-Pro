@@ -1,0 +1,108 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<title>File Organizer Pro</title>
+<style>
+:root{--bg:#eef1f4;--panel:#fff;--ink:#14212b;--mute:#66737f;--line:#d9e0e6;--side:#0f3d3e;--side2:#cfe5e1;--acc:#e8a317;--accink:#2a1d00;--ok:#1f7a4d;--bad:#b3362b;font:14px/1.45 "Segoe UI Variable","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;display:flex;height:100vh;background:var(--bg);color:var(--ink)}
+aside{width:210px;background:var(--side);color:var(--side2);padding:22px 12px;display:flex;flex-direction:column;gap:4px}
+aside h1{font-size:17px;margin:0 8px 18px;color:#fff;font-weight:650;letter-spacing:.01em}
+nav button{all:unset;cursor:pointer;display:block;width:100%;padding:9px 12px;border-radius:7px;color:var(--side2)}
+nav button:hover{background:#ffffff14}nav button.on{background:#fff;color:var(--side);font-weight:600}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 22px;background:var(--panel);border-bottom:1px solid var(--line)}
+.pick{display:flex;gap:6px}input,select,textarea{font:inherit;color:inherit;border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;min-width:0}
+.pick input{flex:1}button.b{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 13px}
+button.b:hover{border-color:var(--side)}button.p{background:var(--acc);border-color:var(--acc);color:var(--accink);font-weight:650}
+button.d{color:var(--bad)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--side);outline-offset:1px}
+.tab{display:none;flex:1;overflow:auto;padding:20px 22px;gap:18px}.tab.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.opts{width:330px;flex:none;display:flex;flex-direction:column;gap:11px;align-self:flex-start}
+.opts label{display:flex;flex-direction:column;gap:3px;color:var(--mute);font-size:12.5px}.opts label.row{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-size:14px}
+.opts h3,.card h3{margin:2px 0;font-size:14px}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:#e3ecea;color:var(--side);border-radius:99px;padding:3px 11px;font-weight:600}.bar{height:8px;background:var(--line);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--side);width:0}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top;word-break:break-all}th{color:var(--mute);font-weight:600}
+.mute{color:var(--mute)}.scroll{overflow:auto;max-height:calc(100vh - 330px)}.grp{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:8px 10px}
+.br{display:grid;grid-template-columns:130px 1fr 70px;gap:8px;align-items:center;margin:5px 0}.br .bar{height:12px}
+#toast{position:fixed;right:20px;bottom:20px;background:var(--side);color:#fff;padding:11px 16px;border-radius:8px;display:none;max-width:420px}
+@media(prefers-reduced-motion:no-preference){.bar i{transition:width .2s}}
+</style></head><body>
+<aside><h1>File Organizer Pro</h1><nav id="nav">
+<button data-t="organize" class="on">Organize</button><button data-t="dupes">Duplicates</button><button data-t="insights">Insights</button>
+<button data-t="history">History &amp; undo</button><button data-t="rules">Rules</button></nav></aside>
+<main>
+<div class="top"><div class="pick"><input id="src" placeholder="Folder to organize, e.g. C:\Users\you\Downloads"><button class="b" id="bs">Browse</button></div>
+<div class="pick"><input id="dst" placeholder="Destination (empty = same folder)"><button class="b" id="bd">Browse</button></div></div>
+
+<section class="tab on" id="organize">
+<div class="card opts">
+<label>Organize by<select id="mode"><option value="{category}">File type</option><option value="{ext}">Extension</option><option value="{category}/{ext}">Type, then extension</option>
+<option value="{year}/{month}">Date (year / month)</option><option value="{category}/{year}">Type, then year</option><option value="{size}">Size bucket</option>
+<option value="{letter}">First letter</option><option value="{parent}">Current parent folder</option><option value="custom">Custom template</option></select></label>
+<label id="tl" style="display:none">Template<input id="tpl" value="{category}/{year}"><span>{category} {ext} {year} {month} {day} {size} {letter} {parent}</span></label>
+<div class="two"><label>Action<select id="action"><option value="move">Move</option><option value="copy">Copy</option></select></label>
+<label>If name exists<select id="conflict"><option value="rename">Keep both</option><option value="skip">Skip</option><option value="overwrite">Overwrite</option></select></label></div>
+<div class="two"><label>Rename files<select id="rename"><option value="none">Keep names</option><option value="clean">Tidy spaces/_</option><option value="lower">lowercase</option><option value="date">Date prefix</option></select></label>
+<label>Date from<select id="dsrc"><option value="modified">Modified</option><option value="created">Created</option></select></label></div>
+<h3>Filters</h3>
+<div class="two"><label>Min size (MB)<input id="minmb" type="number" min="0" value="0"></label><label>Older than (days)<input id="older" type="number" min="0" value="0"></label></div>
+<label>Only extensions<input id="only" placeholder="pdf, jpg"></label><label>Skip extensions<input id="excl" placeholder="tmp, crdownload"></label>
+<label>Ignore names (wildcards)<input id="ign" placeholder="*.part, thumbs.db"></label>
+<label class="row"><input type="checkbox" id="rec"> Include subfolders</label><label class="row"><input type="checkbox" id="hid"> Include hidden files</label>
+<label class="row"><input type="checkbox" id="clean" checked> Remove empty folders afterwards</label>
+<label class="row"><input type="checkbox" id="watch"> Watch folder and organize automatically</label></div>
+<div class="grow"><div class="chips" id="chips"></div>
+<div class="card scroll" style="flex:1"><table><thead><tr><th>File</th><th>Goes to</th><th>Size</th></tr></thead><tbody id="rows"><tr><td colspan="3" class="mute">Choose a folder, then select Preview to see exactly what will happen.</td></tr></tbody></table></div>
+<div class="bar"><i id="prog"></i></div>
+<div style="display:flex;gap:8px"><button class="b" id="prev">Preview</button><button class="b p" id="go">Apply organization</button></div></div></section>
+
+<section class="tab" id="dupes" style="flex-direction:column"><div style="display:flex;gap:8px;align-items:center"><button class="b p" id="dscan">Find duplicates</button>
+<button class="b" id="dkeep">Select all but the oldest</button><button class="b" id="dq">Move selected to _Duplicates</button><button class="b d" id="dt">Send selected to Recycle Bin</button><span class="mute" id="dinfo"></span></div>
+<div class="scroll card" id="dlist" style="flex:1"><span class="mute">Duplicates are found by size, then content hash (SHA-256), so renamed copies are caught.</span></div></section>
+<section class="tab" id="insights" style="flex-direction:column"><div><button class="b p" id="iscan">Analyze folder</button></div><div class="card scroll" id="ins" style="flex:1"><span class="mute">See what takes space and which file types dominate before you organize.</span></div></section>
+<section class="tab" id="history" style="flex-direction:column"><div><button class="b" id="hload">Refresh</button></div><div class="card scroll" id="hist" style="flex:1"><span class="mute">Every run is recorded here so you can undo it.</span></div></section>
+<section class="tab" id="rules" style="flex-direction:column"><div class="card"><h3>Custom rules (checked before the layout)</h3><p class="mute">Match a file name with wildcards and send it to a folder. First match wins.</p>
+<div style="display:flex;gap:8px"><input id="rp" placeholder="*invoice*.pdf" style="flex:1"><input id="rf" placeholder="Finance/Invoices" style="flex:1"><button class="b p" id="radd">Add rule</button></div></div>
+<div class="card scroll" style="flex:1"><table><tbody id="rlist"></tbody></table></div></section>
+</main><div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=b=>b<1e3?b+' B':b<1e6?(b/1e3).toFixed(1)+' KB':b<1e9?(b/1e6).toFixed(1)+' MB':(b/1e9).toFixed(2)+' GB';
+const csv=s=>s.split(',').map(x=>x.trim()).filter(Boolean);let rules=JSON.parse(localStorage.rules||'[]'),dgroups=[];
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',5000)}
+function opts(){return{source:$('src').value.trim(),dest:$('dst').value.trim(),template:$('mode').value==='custom'?$('tpl').value:$('mode').value,
+ action:$('action').value,conflict:$('conflict').value,rename:$('rename').value,date_source:$('dsrc').value,min_mb:+$('minmb').value||0,older_days:+$('older').value||0,
+ only_ext:csv($('only').value),exclude_ext:csv($('excl').value),ignore:csv($('ign').value),recursive:$('rec').checked,hidden:$('hid').checked,cleanup:$('clean').checked,rules,min_age_min:1}}
+async function call(cmd,x={}){const o=opts();if(!o.source){toast('Choose a folder first.');return null}
+ const r=await api.run({...o,...x,cmd});if(r.type==='error'){toast('Error: '+r.message);return null}return r.data}
+api.onEvent(m=>{if(m.type==='progress')$('prog').style.width=(100*m.done/m.total)+'%';
+ if(m.type==='watch'&&m.result.data)toast(`Auto-organized ${m.result.data.moved} file(s).`)});
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button,.tab').forEach(e=>e.classList.remove('on'));b.classList.add('on');$(b.dataset.t).classList.add('on');
+ if(b.dataset.t==='history')hload()});
+$('bs').onclick=async()=>{const p=await api.pick();if(p)$('src').value=p};$('bd').onclick=async()=>{const p=await api.pick();if(p)$('dst').value=p};
+$('mode').onchange=()=>$('tl').style.display=$('mode').value==='custom'?'flex':'none';
+$('prev').onclick=async()=>{const d=await call('plan');if(!d)return;
+ $('chips').innerHTML=[`${d.count} files`,fmt(d.size),`${Object.keys(d.folders).length} folders`,d.skipped?`${d.skipped} skipped`:''].filter(Boolean).map(t=>`<span class="chip">${esc(t)}</span>`).join('')+
+  Object.entries(d.folders).slice(0,8).map(([k,v])=>`<span class="chip" style="background:#f4ecd8;color:#5b4200">${esc(k)}: ${v}</span>`).join('');
+ $('rows').innerHTML=d.rows.length?d.rows.slice(0,500).map(r=>`<tr><td>${esc(r.src.split('\\').pop())}</td><td>${esc(r.folder)}</td><td>${fmt(r.size)}</td></tr>`).join(''):'<tr><td colspan="3" class="mute">Nothing to do: everything already matches this layout.</td></tr>'};
+$('go').onclick=async()=>{const d=await call('plan');if(!d||!d.count){toast('Nothing to organize.');return}
+ if(!confirm(`${$('action').value==='copy'?'Copy':'Move'} ${d.count} files (${fmt(d.size)})?\nYou can undo this from History & undo.`))return;
+ $('prog').style.width='0';const r=await call('apply');if(r){toast(`Done: ${r.moved} file(s) processed${r.errors.length?`, ${r.errors.length} error(s)`:''}${r.removed_dirs?`, ${r.removed_dirs} empty folder(s) removed`:''}.`);$('rows').innerHTML='';$('chips').innerHTML=''}};
+$('watch').onchange=()=>{const o=opts();if(!o.source){$('watch').checked=false;return toast('Choose a folder first.')}api.watch($('watch').checked,o);toast($('watch').checked?'Watching for new files.':'Watching stopped.')};
+$('dscan').onclick=async()=>{$('dlist').innerHTML='<span class="mute">Scanning…</span>';const d=await call('dupes');if(!d)return;dgroups=d.groups;
+ $('dinfo').textContent=`${d.total_groups} groups, ${fmt(d.wasted)} reclaimable`;
+ $('dlist').innerHTML=dgroups.length?dgroups.map((g,i)=>`<div class="grp"><b>${fmt(g[0].size)} × ${g.length}</b>${g.map((f,j)=>`<label style="display:flex;gap:8px;word-break:break-all"><input type="checkbox" data-g="${i}" data-p="${esc(f.path)}"> ${esc(f.path)} <span class="mute">${new Date(f.mtime*1e3).toLocaleDateString()}</span></label>`).join('')}</div>`).join(''):'<span class="mute">No duplicates found.</span>'};
+$('dkeep').onclick=()=>{const seen={};document.querySelectorAll('#dlist input').forEach(c=>{c.checked=seen[c.dataset.g]?true:(seen[c.dataset.g]=1,false)})};
+const sel=()=>[...document.querySelectorAll('#dlist input:checked')].map(c=>c.dataset.p);
+async function dd(mode){const p=sel();if(!p.length)return toast('Select files first.');if(!confirm(`Remove ${p.length} file(s)?`))return;const r=await call('dedupe',{paths:p,mode});if(r){toast(`${r.removed} file(s) removed.`);$('dscan').click()}}
+$('dq').onclick=()=>dd('quarantine');$('dt').onclick=()=>dd('trash');
+$('iscan').onclick=async()=>{const d=await call('stats');if(!d)return;const mx=Math.max(1,...Object.values(d.cats).map(c=>c.size));
+ $('ins').innerHTML=`<h3>${d.files} files, ${fmt(d.size)}</h3>`+Object.entries(d.cats).sort((a,b)=>b[1].size-a[1].size).map(([k,v])=>`<div class="br"><span>${esc(k)} (${v.n})</span><div class="bar"><i style="width:${100*v.size/mx}%"></i></div><span>${fmt(v.size)}</span></div>`).join('')+
+ `<h3 style="margin-top:16px">Largest files</h3><table>${d.largest.map(f=>`<tr><td>${esc(f.path)}</td><td>${fmt(f.size)}</td><td><button class="b" onclick="api.show('${esc(f.path.replace(/\\/g,'\\\\'))}')">Show</button></td></tr>`).join('')}</table>`};
+async function hload(){const d=await call('history');if(!d)return;$('hist').innerHTML=d.items.length?`<table>${d.items.map(h=>`<tr><td>${new Date(h.time*1e3).toLocaleString()}</td><td>${esc(h.op)}</td><td>${h.count} files</td><td><button class="b" data-f="${esc(h.file)}">Undo</button></td></tr>`).join('')}</table>`:'<span class="mute">No runs yet for this folder.</span>';
+ $('hist').querySelectorAll('button').forEach(b=>b.onclick=async()=>{if(!confirm('Undo this run?'))return;const r=await call('undo',{file:b.dataset.f});if(r){toast(`Restored ${r.restored} file(s).`);hload()}})}
+$('hload').onclick=hload;
+function rr(){localStorage.rules=JSON.stringify(rules);$('rlist').innerHTML=rules.length?rules.map((r,i)=>`<tr><td>${esc(r.pattern)}</td><td>→ ${esc(r.folder)}</td><td><button class="b d" data-i="${i}">Remove</button></td></tr>`).join(''):'<tr><td class="mute">No rules yet.</td></tr>';
+ $('rlist').querySelectorAll('button').forEach(b=>b.onclick=()=>{rules.splice(+b.dataset.i,1);rr()})}
+$('radd').onclick=()=>{if(!$('rp').value||!$('rf').value)return toast('Enter a pattern and a folder.');rules.push({pattern:$('rp').value.trim(),folder:$('rf').value.trim()});$('rp').value=$('rf').value='';rr()};rr();
+</script></body></html>

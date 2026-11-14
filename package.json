@@ -1,0 +1,1 @@
+{"name":"file-organizer-pro","version":"1.0.0","description":"Rule-based Windows file organizer","main":"main.js","scripts":{"start":"electron ."},"devDependencies":{"electron":"^33.2.0"}}
